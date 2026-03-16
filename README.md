@@ -1,3 +1,9 @@
+# commit: docs: create comprehensive README with architecture and roadmap
+# description: Full project README with tech stack badges, game concept,
+# architecture diagram, ECS breakdown, MVP roadmap, asset pipeline,
+# deployment guide, and contributing instructions. Styled for maximum
+# GitHub impact with visual hierarchy and clear sections.
+
 <div align="center">
 
 # 🌌 Voxel Drift
