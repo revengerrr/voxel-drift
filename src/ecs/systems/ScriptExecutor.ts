@@ -155,7 +155,7 @@ export function scriptExecutorSystem(_dt: number): void {
 
       case OpCode.JumpIfEmpty: {
         let totalCargo = 0;
-        drone.cargo.forEach((v) => (totalCargo += v));
+        drone.cargo.forEach((v: number) => (totalCargo += v));
         if (totalCargo === 0) {
           scriptRef.programCounter = instruction.jumpTo ?? 0;
         } else {
@@ -166,7 +166,7 @@ export function scriptExecutorSystem(_dt: number): void {
 
       case OpCode.JumpIfFull: {
         let totalCargo = 0;
-        drone.cargo.forEach((v) => (totalCargo += v));
+        drone.cargo.forEach((v: number) => (totalCargo += v));
         if (totalCargo >= drone.maxCargo) {
           scriptRef.programCounter = instruction.jumpTo ?? 0;
         } else {
