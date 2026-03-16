@@ -122,28 +122,95 @@ async function main(): Promise<void> {
   initInputSystem();
   initHUD();
 
-  // 4. Generate first planetoid
-  updateLoading(70, "Generating planetoid...");
-  const planetData = generatePlanet({
-    size: 32,
-    radius: 12,
-    noiseScale: 0.08,
-    heightVariation: 3,
-    seed: 42,
+  // 4. Generate star system — multiple planetoids
+  updateLoading(60, "Generating star system...");
+
+  interface PlanetDef {
+    pos: [number, number, number];
+    radius: number;
+    size: number;
+    seed: number;
+    noiseScale: number;
+    heightVar: number;
+  }
+
+  const planetDefs: PlanetDef[] = [
+    { pos: [0, 0, 0], radius: 12, size: 32, seed: 42, noiseScale: 0.08, heightVar: 3 },
+    { pos: [45, 10, -20], radius: 8, size: 24, seed: 137, noiseScale: 0.1, heightVar: 2 },
+    { pos: [-35, -15, 40], radius: 10, size: 28, seed: 256, noiseScale: 0.07, heightVar: 4 },
+  ];
+
+  const spawnedPlanets: Array<ReturnType<typeof spawnPlanetoid>> = [];
+
+  for (let i = 0; i < planetDefs.length; i++) {
+    const def = planetDefs[i];
+    updateLoading(60 + Math.round((i / planetDefs.length) * 20), `Generating planet ${i + 1}/${planetDefs.length}...`);
+
+    const planetData = generatePlanet({
+      size: def.size,
+      radius: def.radius,
+      noiseScale: def.noiseScale,
+      heightVariation: def.heightVar,
+      seed: def.seed,
+    });
+
+    const planetoid = spawnPlanetoid(def.pos, def.radius, def.size);
+    if (planetoid.voxelData) {
+      planetoid.voxelData.grid = planetData.grid;
+      planetoid.voxelData.dirty = true;
+    }
+    if (planetoid.resourceDeposits) {
+      planetoid.resourceDeposits.deposits = planetData.deposits;
+    }
+
+    spawnedPlanets.push(planetoid);
+  }
+
+  // Visual connection lines between planets (space lanes)
+  const laneMat = new THREE.LineBasicMaterial({
+    color: 0x4ade80,
+    transparent: true,
+    opacity: 0.08,
   });
 
-  const planetoid = spawnPlanetoid([0, 0, 0], 12, 32);
-  if (planetoid.voxelData) {
-    planetoid.voxelData.grid = planetData.grid;
-    planetoid.voxelData.dirty = true;
-  }
-  if (planetoid.resourceDeposits) {
-    planetoid.resourceDeposits.deposits = planetData.deposits;
+  for (let i = 0; i < spawnedPlanets.length; i++) {
+    for (let j = i + 1; j < spawnedPlanets.length; j++) {
+      const a = planetDefs[i].pos;
+      const b = planetDefs[j].pos;
+      const points = [new THREE.Vector3(...a), new THREE.Vector3(...b)];
+      const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(lineGeom, laneMat);
+      scene.add(line);
+    }
   }
 
-  // 5. Spawn player above planetoid surface
+  // Floating particles between planets (space dust)
+  const dustCount = 500;
+  const dustPositions = new Float32Array(dustCount * 3);
+  for (let i = 0; i < dustCount; i++) {
+    dustPositions[i * 3] = (Math.random() - 0.5) * 120;
+    dustPositions[i * 3 + 1] = (Math.random() - 0.5) * 80;
+    dustPositions[i * 3 + 2] = (Math.random() - 0.5) * 120;
+  }
+  const dustGeom = new THREE.BufferGeometry();
+  dustGeom.setAttribute("position", new THREE.Float32BufferAttribute(dustPositions, 3));
+  const dustMat = new THREE.PointsMaterial({
+    color: 0x4ade80,
+    size: 0.15,
+    sizeAttenuation: true,
+    transparent: true,
+    opacity: 0.3,
+  });
+  scene.add(new THREE.Points(dustGeom, dustMat));
+
+  // 5. Spawn player above first planetoid surface
   updateLoading(85, "Spawning player...");
   const playerEntity = spawnPlayer([0, 18, 0]);
+
+  // Track planets explored
+  if (playerEntity.score) {
+    playerEntity.score.planetsExplored = 1;
+  }
 
   // Temporary player mesh (cube placeholder)
   const playerMesh = new THREE.Mesh(
