@@ -25,6 +25,10 @@ import {
   initCameraSystem,
   cameraForward,
 } from "./ecs/systems/CameraSystem";
+import { miningSystem } from "./ecs/systems/MiningSystem";
+
+// UI
+import { initHUD, updateHUD } from "./ui/hud";
 
 // Voxel generation
 import { generatePlanet } from "./voxel/generator";
@@ -116,6 +120,7 @@ async function main(): Promise<void> {
   initVoxelRenderer(scene);
   initCameraSystem(camera);
   initInputSystem();
+  initHUD();
 
   // 4. Generate first planetoid
   updateLoading(70, "Generating planetoid...");
@@ -189,6 +194,7 @@ async function main(): Promise<void> {
       physicsWorld.step();
 
       // Game logic
+      miningSystem(PHYSICS_DT, cameraForward);
       scoreSystem(PHYSICS_DT);
 
       accumulator -= PHYSICS_DT;
@@ -207,6 +213,9 @@ async function main(): Promise<void> {
 
     // Voxel mesh updates
     voxelRenderSystem();
+
+    // UI
+    updateHUD();
 
     // Draw
     renderer.render(scene, camera);
