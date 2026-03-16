@@ -1,0 +1,118 @@
+<!-- commit: feat: add HTML entry point with canvas setup -->
+<!-- description: Main HTML file with game canvas, loading screen, -->
+<!-- and PixiJS UI overlay container. Minimal DOM for max perf. -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voxel Drift — Space Automation Game</title>
+    <meta name="description" content="A voxel space automation game with Galaxy-style gravity and drone programming. Explore planetoids, harvest resources, script drones, climb the leaderboard." />
+    
+    <!-- OG Tags -->
+    <meta property="og:title" content="Voxel Drift" />
+    <meta property="og:description" content="Explore voxel planetoids. Program drones. Automate everything." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/assets/og-card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        background: #09090b;
+        overflow: hidden;
+        font-family: 'JetBrains Mono', monospace;
+        color: #e4e4e7;
+      }
+
+      #game-canvas {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      #ui-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      #ui-overlay > * {
+        pointer-events: auto;
+      }
+
+      /* Loading screen */
+      #loading-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: #09090b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        transition: opacity 0.6s ease, visibility 0.6s ease;
+      }
+
+      #loading-screen.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      #loading-screen h1 {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, #a78bfa, #22d3ee, #34d399);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .loader-bar {
+        width: 200px;
+        height: 3px;
+        background: #27272a;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .loader-bar-fill {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #a78bfa, #22d3ee);
+        border-radius: 2px;
+        transition: width 0.3s ease;
+      }
+
+      #loading-status {
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #71717a;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <h1>Voxel Drift</h1>
+      <div class="loader-bar">
+        <div class="loader-bar-fill" id="loader-fill"></div>
+      </div>
+      <p id="loading-status">Initializing physics...</p>
+    </div>
+
+    <!-- Three.js Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- PixiJS / HTML UI Overlay -->
+    <div id="ui-overlay"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
