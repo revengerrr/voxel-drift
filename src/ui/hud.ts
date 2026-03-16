@@ -4,14 +4,14 @@
 // counts, and a mini score display. Updates every frame from ECS state.
 // PixiJS upgrade planned for Phase 5 polish.
 
-import { ResourceType } from "../components";
+import { ResourceType } from "../ecs/components";
 import {
   isTargetingBlock,
   targetBlockType,
   miningProgress,
   getInventorySummary,
-} from "../systems/MiningSystem";
-import { getScoreSnapshot } from "../systems/ScoreSystem";
+} from "../ecs/systems/MiningSystem";
+import { getScoreSnapshot } from "../ecs/systems/ScoreSystem";
 
 // ─── Block Names ──────────────────────────────────────────────
 
