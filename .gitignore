@@ -1,0 +1,39 @@
+# commit: chore: add gitignore
+# description: Standard gitignore for Vite + TypeScript project.
+# Excludes node_modules, build output, env files, and editor configs.
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vercel
+.vercel
+
+# TypeScript cache
+*.tsbuildinfo
