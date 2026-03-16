@@ -29,6 +29,14 @@ import { miningSystem } from "./ecs/systems/MiningSystem";
 
 // UI
 import { initHUD, updateHUD } from "./ui/hud";
+import {
+  initGameState,
+  showTitleScreen,
+  isPlaying,
+  triggerGameOver,
+  checkVoidDeath,
+} from "./ui/GameStateManager";
+import { getScoreSnapshot } from "./ecs/systems/ScoreSystem";
 
 // Voxel generation
 import { generatePlanet } from "./voxel/generator";
@@ -219,17 +227,57 @@ async function main(): Promise<void> {
   );
   scene.add(playerMesh);
 
-  // 6. Resize handler
+  // 6. Game state manager
+  const planetCenters = planetDefs.map(d => ({ x: d.pos[0], y: d.pos[1], z: d.pos[2] }));
+
+  function resetPlayer(): void {
+    if (playerEntity.transform) {
+      playerEntity.transform.position.set(0, 18, 0);
+    }
+    if (playerEntity.velocity) {
+      playerEntity.velocity.linear.set(0, 0, 0);
+      playerEntity.velocity.angular.set(0, 0, 0);
+    }
+    if (playerEntity.inventory) {
+      playerEntity.inventory.items.clear();
+    }
+    if (playerEntity.score) {
+      playerEntity.score.manualHarvest = 0;
+      playerEntity.score.automatedHarvest = 0;
+      playerEntity.score.planetsExplored = 1;
+      playerEntity.score.activeDrones = 0;
+      playerEntity.score.automationRatio = 0;
+      playerEntity.score.elapsedTime = 0;
+    }
+  }
+
+  initGameState(
+    // onStart
+    () => {
+      resetPlayer();
+      const canvas = document.getElementById("game-canvas");
+      if (canvas) canvas.requestPointerLock();
+    },
+    // onRestart
+    () => {
+      resetPlayer();
+      const canvas = document.getElementById("game-canvas");
+      if (canvas) canvas.requestPointerLock();
+    }
+  );
+
+  // 7. Resize handler
   window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  // 7. Hide loading
+  // 8. Hide loading → show title
   updateLoading(100, "Ready!");
   await new Promise((r) => setTimeout(r, 400));
   hideLoading();
+  showTitleScreen();
 
   // ─── Game Loop ────────────────────────────────────────────
 
@@ -247,22 +295,36 @@ async function main(): Promise<void> {
 
     // ── Fixed-step physics (60Hz) ──
     while (accumulator >= PHYSICS_DT) {
-      // Input
-      inputSystem();
+      if (isPlaying()) {
+        // Input
+        inputSystem();
 
-      // Scripts
-      scriptExecutorSystem(PHYSICS_DT);
+        // Scripts
+        scriptExecutorSystem(PHYSICS_DT);
 
-      // Physics
-      gravitySystem(PHYSICS_DT);
-      movementSystem(PHYSICS_DT, cameraForward);
+        // Physics
+        gravitySystem(PHYSICS_DT);
+        movementSystem(PHYSICS_DT, cameraForward);
 
-      // Rapier step (for future colliders)
-      physicsWorld.step();
+        // Rapier step (for future colliders)
+        physicsWorld.step();
 
-      // Game logic
-      miningSystem(PHYSICS_DT, cameraForward);
-      scoreSystem(PHYSICS_DT);
+        // Game logic
+        miningSystem(PHYSICS_DT, cameraForward);
+        scoreSystem(PHYSICS_DT);
+
+        // Check void death
+        if (playerEntity.transform) {
+          const pp = playerEntity.transform.position;
+          if (checkVoidDeath({ x: pp.x, y: pp.y, z: pp.z }, planetCenters)) {
+            const snapshot = getScoreSnapshot();
+            if (snapshot) {
+              triggerGameOver(snapshot.totalScore, snapshot);
+            }
+            document.exitPointerLock();
+          }
+        }
+      }
 
       accumulator -= PHYSICS_DT;
     }
