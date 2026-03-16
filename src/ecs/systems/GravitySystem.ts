@@ -10,6 +10,10 @@ import { gravityBodies, planetoids } from "../world";
 const _tempVec = new THREE.Vector3();
 const _tempVec2 = new THREE.Vector3();
 
+/** Track which planets the player has visited */
+const _visitedPlanets = new Set<number>();
+_visitedPlanets.add(0); // start planet
+
 interface GravityInfluence {
   entityIndex: number;
   center: THREE.Vector3;
@@ -92,8 +96,21 @@ export function gravitySystem(dt: number): void {
       gravityBody.surfaceNormal.lerp(targetNormal, Math.min(1, dt * 5));
       gravityBody.surfaceNormal.normalize();
 
-      // Track which planetoid we're bound to
+      // Detect planet transition
+      const prevBound = gravityBody.boundTo;
       gravityBody.boundTo = bestInfluence.entityIndex;
+
+      // Track planets explored (for player entity)
+      if (prevBound !== null && prevBound !== bestInfluence.entityIndex) {
+        const ent = entity as Record<string, unknown>;
+        if (ent.isPlayer && ent.score) {
+          const score = ent.score as { planetsExplored: number };
+          if (!_visitedPlanets.has(bestInfluence.entityIndex)) {
+            _visitedPlanets.add(bestInfluence.entityIndex);
+            score.planetsExplored = _visitedPlanets.size;
+          }
+        }
+      }
     } else {
       // No gravity — free floating in space
       gravityBody.boundTo = null;
